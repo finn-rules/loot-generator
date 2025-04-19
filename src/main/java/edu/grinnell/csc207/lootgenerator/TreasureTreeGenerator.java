@@ -7,26 +7,49 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+/**
+ * TreasureTreeGenerator class.
+ */
 public class TreasureTreeGenerator {
-     private final Scanner scanner;
-     private HashMap<String, String[]> lootTableHashes;
+    private final Scanner scanner;
+    private HashMap<String, String[]> lootTableHashes;
 
-     public TreasureTreeGenerator(String fileName) throws IOException, InterruptedException, FileNotFoundException {
-          this.scanner = new Scanner(new File(fileName));
-          this.lootTableHashes = new HashMap<>();
-          setHashes();
-     }
+     /**
+      * Constructor for the TreasureTreeGenerator, which contains a HashMap and a
+      * scanner.
+      * 
+      * @param fileName : a string representing the name of the file
+      * @throws IOException
+      * @throws InterruptedException
+      * @throws FileNotFoundException
+      */
+    public TreasureTreeGenerator(String fileName) 
+          throws IOException, InterruptedException, FileNotFoundException {
+        this.scanner = new Scanner(new File(fileName));
+        this.lootTableHashes = new HashMap<>();
+        setHashes();
+    }
 
-     public void setHashes() {
-          while (this.scanner.hasNextLine()) {
-               String fullTreasureInfo = this.scanner.nextLine();
-               String[] monsterTreasureArray = fullTreasureInfo.split("\t");
-               String[] items = { monsterTreasureArray[1], monsterTreasureArray[2], monsterTreasureArray[3] };
-               this.lootTableHashes.put(monsterTreasureArray[0], items);
-          }
-     }
+     /**
+      * setHashes: using the scanner on the file of interest, put each "line" into
+      * the HashMap field.
+      */
+    public void setHashes() {
+        while (this.scanner.hasNextLine()) {
+            String fullTreasureInfo = this.scanner.nextLine();
+            String[] monsterTArray = fullTreasureInfo.split("\t");
+            String[] items = {monsterTArray[1], monsterTArray[2], monsterTArray[3]};
+            this.lootTableHashes.put(monsterTArray[0], items);
+        }
+    }
 
-     public TreeMap<String, String[]> getHashesTreeMap() {
-          return new TreeMap<>(this.lootTableHashes);
-     }
+     /**
+      * getHashesTreeMap : convert the hash field into a tree map of hashes.
+      * 
+      * @return a TreeMap with a STRING as the key and a 3-length array as the value
+      *         (which may or may not be keys)
+      */
+    public TreeMap<String, String[]> getHashesTreeMap() {
+        return new TreeMap<>(this.lootTableHashes);
+    }
 }
