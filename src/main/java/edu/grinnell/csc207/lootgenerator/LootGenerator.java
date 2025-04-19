@@ -6,12 +6,25 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.TreeMap;
 
+/**
+ * The LootGenerator class.
+ */
 public class LootGenerator {
     /** The path to the dataset (either the small or large set). */
     private static final String DATA_SET = "data/large";
 
-    // This method combines both pickMonster and getTreasureClass : the monster is the "key" and the
-    // treasureClass is the "value" in a pair. Choose a random monster pair from an arrayList of size hashSize.
+    // This method combines both pickMonster and getTreasureClass : the monster is
+    // the "key" and the
+    // treasureClass is the "value" in a pair. Choose a random monster pair from an
+    // arrayList of size hashSize.
+    /**
+     * pickMonster : choose a random monster to fight from the monstats file (which
+     * is now an ArrayList) and return the information of a single monster.
+     * 
+     * @param hashes the ArrayList of all monsters from a single file (represented
+     *               as pairs)
+     * @return a single monster pair.
+     */
     public Pair<String, String> pickMonster(ArrayList<Pair<String, String>> hashes) {
         int randomIndex = (int) (Math.random() * hashes.size());
         Pair<String, String> monsterInfo = hashes.get(randomIndex);
@@ -25,29 +38,61 @@ public class LootGenerator {
 
     // recursive function to pick loot from the loot table. params: tree, current
     // key. returns the base item (as a string)
+    /**
+     * pickLoot : a recursive function which searches a TreeMap to see if a
+     * TreasureClass "key" is contained in the TreeMap. If not, we know it is a
+     * valid treasure pull, and we return it. If the key is contained, we randomly
+     * select another potential key from the current Key's value, and recurse.
+     * 
+     * @param lootTableHashes a TreeMap of all possible Treasure combos.
+     * @param curKey          the current TreasureClass to be searched for
+     * @return the ultimate goal is to return an "item" which is not a treasureclass
+     *         (so not a key)
+     */
     public String pickLoot(TreeMap<String, String[]> lootTableHashes, String curKey) {
         if (!lootTableHashes.containsKey(curKey)) {
             return curKey;
         } else {
             String[] possibleKeyStrings = lootTableHashes.get(curKey);
-            int nextKeyIndex = (int) (Math.random() * possibleKeyStrings.length); // Should be 3.
+            int nextKeyIndex = (int) (Math.random() * possibleKeyStrings.length);
             String nextKey = possibleKeyStrings[nextKeyIndex];
             return pickLoot(lootTableHashes, nextKey);
         }
     }
 
-    public static int pickDefenseStat(TreeMap<String, Pair<Integer, Integer>> statTree, String itemName) {
-        if (statTree.containsKey(itemName)) {
-            Pair<Integer, Integer> statRange = statTree.get(itemName);
+    /**
+     * pickDefenseStat : using a TreeMap of possible items, generate the stats of a
+     * single item using randomness.
+     * We will appeal to the fact that we have pairs of maxes and min defense stats
+     * stored for each item, and return a random value between these bounds.
+     * 
+     * @param statTree a TreeMap where key are the items and "defense bounds" are
+     *                 the values.
+     * @param k the item name or "key" we're looking for in the TreeMap
+     * @return a randomly generated defense stat in the bounds for our item.
+     */
+    public static int pickDefenseStat(TreeMap<String, Pair<Integer, Integer>> statTree, String k) {
+        if (statTree.containsKey(k)) {
+            Pair<Integer, Integer> statRange = statTree.get(k);
             int minac = statRange.getKey();
             int maxac = statRange.getValue();
             return (int) (Math.random() * (maxac - minac + 1)) + minac;
         } else {
             System.out.println("Error: item not found in the armor.txt file!");
-            return 0; // Default value if item not found
+            return 0; // Default value if item not found (shouldn't happen)
         }
     }
 
+    /**
+     * generateAffix : decides whether a prefix/suffix should be generated for the
+     * item! If one is generated,
+     * then we return a pair that is actually meaningful (aka a pair of the affix
+     * itself and extra buffs).
+     * 
+     * @param affixes an ArrayList of possible affixes (which we randomly choose, if
+     *                needed)
+     * @return either a valid affix or an empty pair.
+     */
     public static Pair<String, String> generateAffix(ArrayList<Pair<String, String[]>> affixes) {
         boolean hasAffix;
         Pair<String, String> affixPair = null;
@@ -57,7 +102,7 @@ public class LootGenerator {
         } else {
             hasAffix = true;
         }
-        if(hasAffix) {
+        if (hasAffix) {
             int randomIndex = (int) (Math.random() * affixes.size());
             Pair<String, String[]> thisAffix = affixes.get(randomIndex);
             String affixName = thisAffix.getKey();
@@ -66,19 +111,33 @@ public class LootGenerator {
             int minStat = Integer.parseInt(affixInfoArray[1]);
             int maxStat = Integer.parseInt(affixInfoArray[2]);
 
+            // Randomly generate a stat in the bounds, and set the pair to the actual affix
+            // + affix info
             int affixStat = (int) (Math.random() * (maxStat - minStat + 1)) + minStat;
             affixPair = new Pair<>(affixName, affixType + " " + affixStat);
         }
         return affixPair;
     }
 
-    public static void main(String[] args) throws FileNotFoundException, IOException, InterruptedException {
+    /**
+     * main : the entry point of our program. Contains a loop where the user is
+     * prompted. Decomposes our problem into the necessary classes and methods when
+     * applicable.
+     * 
+     * @param args : the command line arguments (not applicable)
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static void main(String[] args) 
+        throws FileNotFoundException, IOException, InterruptedException {
         System.out.println("This program kills monsters and generates loot!");
-        MonsterInfoGenerator<Integer, Pair<String, String>> m = new MonsterInfoGenerator<>(DATA_SET + "/monstats.txt");
+        MonsterInfoGenerator<Integer, Pair<String, String>> m = 
+            new MonsterInfoGenerator<>(DATA_SET + "/monstats.txt");
         m.setMapPairs();
         m.getWords();
         boolean running = true;
-        System.out.println("Press 'y' to fight a monster, or type 'n' to quit. Then press 'enter'.");
+        System.out.println("Press 'y' to fight a monster / type 'n' to quit. Then press 'enter'.");
         while (running) {
             System.out.println("\nFight [y/n]?");
             while (true) {
@@ -93,9 +152,10 @@ public class LootGenerator {
                 } else if (input.equalsIgnoreCase("y")) {
                     break;
                 } else {
+                    input = s.nextLine();
                     System.out.println("Fight again [y/n]?");
+                    continue;
                 }
-                s.close();
             }
 
             if (!running) {
@@ -105,13 +165,13 @@ public class LootGenerator {
             ArrayList<Pair<String, String>> monsterInfoHashes = m.getWords();
             LootGenerator lootGen = new LootGenerator();
             Pair<String, String> monsterInfo = lootGen.pickMonster(monsterInfoHashes);
-            // System.out.println("Loot table: " + monsterInfo.getValue());
 
             System.out.println();
 
             // Now we need to pick a loot table from the monster's loot table
             // Generate the tree from TreasureClassEx.txt.
-            TreasureTreeGenerator ltg = new TreasureTreeGenerator(DATA_SET + "/TreasureClassEx.txt");
+            TreasureTreeGenerator ltg = 
+                new TreasureTreeGenerator(DATA_SET + "/TreasureClassEx.txt");
             TreeMap<String, String[]> lootTableHashes = ltg.getHashesTreeMap();
             String currentTreasureClass = monsterInfo.getValue();
 
@@ -121,9 +181,11 @@ public class LootGenerator {
             TreeMap<String, Pair<Integer, Integer>> lootStatTreeMap = statTree.getHashesTreeMap();
             int statValue = pickDefenseStat(lootStatTreeMap, lootPull);
 
-            ArrayList<Pair<String, String[]>> prefixes = new AffixListGenerator<>(DATA_SET + "/MagicPrefix.txt").getWords();
+            ArrayList<Pair<String, String[]>> prefixes = 
+                new AffixListGenerator<>(DATA_SET + "/MagicPrefix.txt").getWords();
 
-            ArrayList<Pair<String, String[]>> suffixes = new AffixListGenerator<>(DATA_SET + "/MagicSuffix.txt").getWords();
+            ArrayList<Pair<String, String[]>> suffixes = 
+                new AffixListGenerator<>(DATA_SET + "/MagicSuffix.txt").getWords();
 
             Pair<String, String> prefixPair = generateAffix(prefixes);
             Pair<String, String> suffixPair = generateAffix(suffixes);
@@ -132,54 +194,29 @@ public class LootGenerator {
             String suffix = null;
             String suffixInfo = null;
 
-            if(prefixPair != null) {
+            if (prefixPair != null) {
                 prefix = prefixPair.getKey();
                 prefixInfo = prefixPair.getValue();
             }
 
-            if(suffixPair != null) {
+            if (suffixPair != null) {
                 suffix = suffixPair.getKey();
                 suffixInfo = suffixPair.getValue();
             }
-            if(prefix != null) {
+            if (prefix != null) {
                 System.out.print(prefix + " ");
             }
-            if(suffix == null) {
+            if (suffix == null) {
                 suffix = "";
             }
             System.out.println(lootPull + " " + suffix);
             System.out.println("Defense: " + statValue);
-            if(prefixInfo != null) {
+            if (prefixInfo != null) {
                 System.out.println(prefixInfo);
             }
-            if(suffixInfo != null) {
+            if (suffixInfo != null) {
                 System.out.println(suffixInfo);
             }
         }
     }
 }
-
-/*
- * Steps:
- * 1: Randomly pick a monster to fight from monstats.txt - and print its name
- * 2: Randomly pick a loot table from the monster's loot table: which we grabbed
- * as the
- * third word or the fourth tab-seperated word in the monster's line in
- * monstats.txt
- * 3: Recursively pick loot from the loot table until we reach a base item: do
- * this with a
- * binary search?? on every first line of the loot table: the key gives us
- * access to three possible items,
- * which may be a base item or another loot table (hence a key).
- * These keys are notably comparable, so we can use binary search to find the
- * key in the loot table.
- * 
- * Note: the first word of each line in the TreasureClass.txt file is a loot
- * table.
- * Should we binary search over these?
- * 
- * For random loot generation: we can use an array.
- * For recursive searching: we can use a tree map.
- * 
- * Suffixes: randomly generate a suffix, affix, 
- */
